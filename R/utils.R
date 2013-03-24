@@ -23,6 +23,8 @@ clickme_quote <- function(data) {
 
 #' Run a local server
 #'
+#' @param path path where server is started
+#' @param port port used to start the server
 #' @export
 server <- function(path=get_root_path(), port=8888){
     system(paste0("pushd ", path, "; python -m SimpleHTTPServer", port, "; popd"))
@@ -44,9 +46,6 @@ test_translator <- function(ractive){
     }
 }
 
-#' return a matrix with random values
-#'
-#' @export
 mat <- function(elements=NULL, num_elements=nrow*ncol, nrow=5, ncol=2, scale_by=100, rownames=NULL, colnames=NULL){
     if (is.null(elements)){
         elements <- runif(num_elements) * scale_by
@@ -88,6 +87,7 @@ titleize <- function(str){
 #' Get information about a ractive
 #'
 #' @param ractive ractive name
+#' @param fields any of the fields in template_config.yml
 #' @export
 show_ractive <- function(ractive, fields = NULL){
 
@@ -100,10 +100,13 @@ show_ractive <- function(ractive, fields = NULL){
 
     for (field in fields){
         if (!is.null(opts$template[[field]])){
-            message(paste0(titleize(field)))
-            if (field == "default_parameters"){
-                cat(paste0(paste0(names(opts$template_config[[field]]), ": ", opts$template_config[[field]]), collapse="\n"), "\n\n")
+            if (field == "default_parameters") {
+                if (length(opts$template_config$default_parameters) > 0){
+                    message(paste0(titleize(field)))
+                    cat(paste0(paste0(names(opts$template_config$default_parameters), ": ", opts$template_config$default_parameters), collapse="\n"), "\n\n")
+                }
             } else {
+                message(paste0(titleize(field)))
                 cat(paste0(opts$template_config[[field]], collapse="\n"), "\n")
             }
 

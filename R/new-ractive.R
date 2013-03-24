@@ -1,8 +1,8 @@
 #' Creates a new ractive
 #'
 #' This creates the folder structure with the files that a ractive needs.
-#' @param ractive_name
-#' @param overwrite
+#' @param ractive_name name of the ractive
+#' @param overwrite flag that indicates what to do when there is another ractive of the same name, default FALSE
 #' @export
 new_ractive <- function(ractive_name, overwrite = FALSE) {
     opts <- add_ractive_opts(ractive_name)
@@ -47,26 +47,30 @@ default_parameters: {
 
 require_packages:
 
-require_server: false
+require_server: no
 
 original_url:
 
 ", opts$path$template_config_file)
 
-    writeLines("#' Translate the data object to the format expected by template.Rmd
+    writeLines("#' Translate the data object to the format expected by the current template
 #'
 #' It returns the translated data object.
 #'
 #' @param data input data object
-#' @param opts options of current ractive
-translate <- function(data, opts) {
+#' @param opts options used by current template
+translate <- function(data, opts = NULL) {
     data
 }", opts$path$translator_file)
 
     writeLines("context(\"translate\")
 
-test_that(\"dataframes are translated to the format expected by the template\", {
+test_that(\"input data is translated to the format expected by the template\", {
+    input_data <- data.frame()
+    expected_data <- \"\"
 
+    translated_input <- translate(input_data)
+    expect_equal(translated_input, expected_data)
 })", opts$path$translator_test_file)
 
 }
