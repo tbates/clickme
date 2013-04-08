@@ -1,37 +1,6 @@
-#' Generate HTML script tags
-#'
-#' @param opts the options of the current template
-#' @export
-append_scripts <- function(opts) {
-    scripts <- paste(sapply(opts$template_config$scripts, function(script_path){
-        if (!grepl("^http", script_path)){
-            script_path <- file.path(opts$relative_path$external, script_path)
-        }
-        paste0("<script src=\"", script_path, "\"></script>")
-    }), collapse="\n")
-
-    scripts
-}
-
-#' Generate HTML style tags
-#'
-#' @param opts the options of the current template
-#' @export
-append_styles <- function(opts) {
-    styles <- paste(sapply(opts$template_config$styles, function(style_path){
-        if (!grepl("^http", style_path)){
-            style_path <- file.path(opts$relative_path$external, style_path)
-        }
-        paste0("<link href=\"", style_path, "\" rel=\"stylesheet\">")
-    }), collapse="\n")
-
-    styles
-}
-
 #' @import knitr
-generate_visualization <- function(data, opts){
+generate_visualization <- function(opts){
     visualization <- knit_expand(opts$path$template_file)
-
     capture.output(knit(text = visualization, output = opts$path$html_file))
 }
 
@@ -39,11 +8,8 @@ generate_visualization <- function(data, opts){
 #'
 #' @param data input data
 #' @param ractive template id, it must match a folder within \code{set_root_path}
-#' @param params list containing the parameters and values that will be accessible from the template
-#' @param data_name name used to identify the output HTML file, default "dataRANDOMSTRING"
-#' @param html_file_name name of the output HTML file that contains the visualization, default "data_name-ractive.html"
 #' @param browse open browser, default TRUE
-#' @param port port used to open a local browser, default 8888
+#' @param ... additional arguments for \code{get_opts}
 #' @export
 #' @examples
 #'
@@ -69,29 +35,23 @@ generate_visualization <- function(data, opts){
 #' df3 <- matrix(rnorm(200), ncol = 8,nrow = 25)
 #' rownames(df3) <- paste0("GENE_", 1:25)
 #' colnames(df3) <- paste0("sample_", 1:8)
-#' clickme(df3, "longitudinal_heatmap") # you will need to have a local server for this one. Try running server() if you have python installed
-clickme <- function(data, ractive, params = NULL, data_name = NULL, html_file_name = NULL, browse = interactive(), port = 8888){
-    opts <- get_opts(ractive, params = params, data_name = data_name, html_file_name = html_file_name)
+#' clickme(df3, "longitudinal_heatmap") # you will need to have a local server for this one.
+clickme <- function(data, ractive, browse = interactive(), ...){
+    opts <- get_opts(ractive, ...)
 
-    data <- validate_data_names(data, opts)
-    opts$data <- translate_data(data, opts)
+    opts$data <- validate_data_names(data, opts)
 
-    generate_visualization(data, opts)
+    source(opts$path$translator_file)
+    generate_visualization(opts)
 
     if (opts$template_config$require_server){
-        url <- paste0("http://localhost:", port, "/", opts$name$html_file)
-        message("Make sure you have a server running at: ", get_root_path(), "\nYou can use server() to start one, if you have python installed")
-    } else {
-        url <- opts$path$html_file
+        message("Make sure you have a server running at: ", get_root_path())
+        message("Try running: python -m SimpleHTTPServer")
     }
 
-    if (browse) browseURL(url)
+    if (browse) browseURL(opts$url)
 
-    invisible(url)
+    invisible(opts)
 }
 
-translate_data <- function(data, opts) {
-    source(opts$path$translator_file)
-    data <- translate(data, opts)
-    data
-}
+

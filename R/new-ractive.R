@@ -7,31 +7,7 @@
 new_ractive <- function(ractive_name, overwrite = FALSE) {
     opts <- add_ractive_opts(ractive_name)
 
-    if (overwrite){
-        unlink(file.path(get_root_path(), ractive_name), recursive=TRUE)
-    } else {
-        if (file.exists(opts$path$ractive)) stop("The ", opts$name$ractive, " ractive already exists: ", opts$path$ractive)
-    }
-
-    message("Adding new ractive: ", opts$name$ractive)
-    sapply(c(opts$path$ractive,
-             opts$path$external,
-             opts$path$template,
-             opts$path$tests,
-             opts$path$data), function(path){
-                dir.create(path)
-                message("Created directory: ", path)
-             })
-
-    sapply(c(opts$path$template_file,
-             opts$path$template_config_file,
-             opts$path$translator_test_file,
-             opts$path$translator_file), function(path){
-                file.create(path)
-                message("Created file: ", path)
-             })
-
-    writeLines("info: |
+    template_config_contents <- "info: |
 
 valid_names:
 
@@ -46,31 +22,67 @@ default_parameters: {
 }
 
 require_packages:
+    - df2json
 
 require_server: no
 
 original_url:
 
-", opts$path$template_config_file)
+demo: |
 
-    writeLines("#' Translate the data object to the format expected by the current template
-#'
-#' It returns the translated data object.
-#'
-#' @param data input data object
-#' @param opts options used by current template
-translate <- function(data, opts = NULL) {
-    data
-}", opts$path$translator_file)
 
-    writeLines("context(\"translate\")
+"
+
+    translator_contents <- "get_data_as_json <- function(opts) {
+    library(df2json)
+    data <- as.data.frame(opts$data, stringsAsFactors=FALSE)
+    json_data <- df2json(data)
+
+    json_data
+}
+
+get_data_as_json_file <- function(opts) {
+    opts$data <- get_data_as_json(opts)
+    json_file <- create_data_file(opts, \"json\")
+
+    json_file
+}"
+
+    translator_test_contents <- paste0("context(\"translate ", ractive_name, "\")
 
 test_that(\"input data is translated to the format expected by the template\", {
-    input_data <- data.frame()
-    expected_data <- \"\"
+    opts <- get_opts(\"", ractive_name ,"\")
+    opts$data <- data.frame() # assign to this variable the typical input data you would use in R
+    expected_data <- \"\" # assign to this variable the same data in the format expected by the template
 
-    translated_input <- translate(input_data)
-    expect_equal(translated_input, expected_data)
-})", opts$path$translator_test_file)
+    json_data <- get_data_as_json(opts)
+    expect_equal(json_data, expected_data)
+})")
 
+    if (overwrite){
+        unlink(file.path(get_root_path(), ractive_name), recursive=TRUE)
+    } else {
+        if (file.exists(opts$path$ractive)) stop("The ", opts$name$ractive, " ractive already exists: ", opts$path$ractive)
+    }
+
+    message("Adding new ractive: ", opts$name$ractive)
+    sapply(c(opts$path$ractive,
+             opts$path$external,
+             opts$path$template,
+             opts$path$data), function(path){
+                dir.create(path)
+                message("Created directory: ", path)
+             })
+
+    sapply(c(opts$path$template_file,
+             opts$path$template_config_file,
+             opts$path$translator_test_file,
+             opts$path$translator_file), function(path){
+                file.create(path)
+                message("Created file: ", path)
+             })
+
+    writeLines(template_config_contents, opts$path$template_config_file)
+    writeLines(translator_contents, opts$path$translator_file)
+    writeLines(translator_test_contents, opts$path$translator_test_file)
 }

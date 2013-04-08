@@ -4,7 +4,7 @@
 #' @param path path to be used as root
 #' @export
 set_root_path <- function(path) {
-    if (!file.exists(path)) stop("Path doesn't exist: \'", path, "\'")
+    if (!file.exists(path)) stop("Path doesn't exist: ", path)
 
     .clickme_env$root_path <- path
 
@@ -17,14 +17,17 @@ set_root_path <- function(path) {
 get_root_path <- function() {
     if (is.null(.clickme_env$root_path)){
         if (exists("CLICKME_ROOT_PATH") && !is.null(CLICKME_ROOT_PATH)){
-            if (!file.exists(CLICKME_ROOT_PATH)) stop("Your CLICKME_ROOT_PATH variable contains an invalid file path: \'", CLICKME_ROOT_PATH, "\'\n  You can change it directly, or use set_root_path(\"valid/path/to/root/folder\")")
+            if (!file.exists(CLICKME_ROOT_PATH)) stop("Your CLICKME_ROOT_PATH variable contains an invalid file path: \'", CLICKME_ROOT_PATH, "\'\n  You can change it directly, or use set_root_path(\"/path/to/root/folder\")")
 
             .clickme_env$root_path <- CLICKME_ROOT_PATH
         } else {
-            message("No CLICKME_ROOT_PATH variable found, using default root path.")
+            message("* No CLICKME_ROOT_PATH variable found, using default root path:")
+            message("set_root_path(\"", system.file("examples", package = "clickme"), "\")")
             set_root_path(system.file("examples", package = "clickme"))
+            message("\n* The root path is the folder where your ractives live.\nSee the wiki for more info: bit.ly/clickme_wiki\n")
         }
 
     }
-    .clickme_env$root_path
+
+    invisible(.clickme_env$root_path)
 }
