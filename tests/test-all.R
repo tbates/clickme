@@ -1,14 +1,9 @@
 library(testthat)
-library(knitr)
-library(yaml)
 
-# needed to test force_directed ractive
-library(df2json)
+old_clickme_template_path <- getOption("clickme_template_path")
+old_clickme_output_path <- getOption("clickme_output_path")
 
-# needed to test line_with_focus ractive
-library(rjson)
+set_default_paths()
+test_check("clickme")
 
-# needed to test one_zoom ractive
-library(ape)
-
-test_package("clickme")
+options(clickme_template_path = old_clickme_template_path, clickme_output_path = old_clickme_output_path)
